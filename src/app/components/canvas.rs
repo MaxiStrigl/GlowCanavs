@@ -2,7 +2,7 @@ use crate::app::helpers::canvas_helpers::get_context;
 use crate::app::helpers::mouse_helpers::handle_mouse_event;
 use crate::app::{
     components::coordinate_display::CoordinateDisplay,
-    stroke_rendering::quadratic::draw_smooth_line,
+    stroke_rendering::cubic::draw_smooth_line,
 };
 use leptos::*;
 use wasm_bindgen::JsCast;
@@ -51,16 +51,26 @@ pub fn Canvas() -> impl IntoView {
         }
 
         handle_mouse_event(ev, |coordinate| {
+            let (prev_x, prev_y) = coordinates.get();
+            let (curr_x, curr_y) = coordinate;
+
+            let distance = (curr_x - prev_x).powi(2) + (curr_y - prev_y).powi(2).sqrt();
+
+            if distance < 5.0 {
+                return;
+            }
+
             set_to_coordinates.update(|c| *c = coordinate);
-            set_current_stroke.update(|stroke| stroke.push(coordinate))
+            set_current_stroke.update(|stroke| stroke.push(coordinate));
+
+            //TODO: Pass only 4 segments to the function instead of entire list-
+            draw_smooth_line(
+                context_ref.get().expect("Context is none"),
+                &current_stroke.get(),
+            );
+
+            set_coordinates.set(to_coordinates.get());
         });
-
-        draw_smooth_line(
-            context_ref.get().expect("Context is none"),
-            &current_stroke.get(),
-        );
-
-        set_coordinates.set(to_coordinates.get());
     };
 
     let handle_mouse_up = move |ev: MouseEvent| {
@@ -78,7 +88,6 @@ pub fn Canvas() -> impl IntoView {
 
         set_current_stroke.set(Stroke::new());
     };
-
 
     let scale_canvas = move || {
         if let Some(canvas) = canvas_ref.get() {

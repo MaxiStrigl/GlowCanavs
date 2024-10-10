@@ -1,11 +1,10 @@
-use wasm_bindgen::JsValue;
-use web_sys::{console::log_1, CanvasRenderingContext2d};
+use web_sys::CanvasRenderingContext2d;
 
 use super::line::draw_line;
 
 fn draw_quadratic_line(
-    context: CanvasRenderingContext2d,
-    p0: (f64, f64),
+    context: &CanvasRenderingContext2d,
+    _p0: (f64, f64),
     p1: (f64, f64),
     p2: (f64, f64),
 ) {
@@ -17,7 +16,7 @@ fn draw_quadratic_line(
     context.stroke();
 }
 
-pub fn draw_smooth_line(context: CanvasRenderingContext2d, points: &Vec<(f64, f64)>) {
+pub fn draw_smooth_line(context: &CanvasRenderingContext2d, points: &Vec<(f64, f64)>) {
     if points.len() < 3 {
         let len = points.len();
         let from = points.get(len - 2);

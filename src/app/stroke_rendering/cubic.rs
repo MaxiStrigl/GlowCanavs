@@ -1,12 +1,11 @@
-use wasm_bindgen::JsValue;
-use web_sys::{console::log_1, CanvasRenderingContext2d};
+use web_sys::CanvasRenderingContext2d;
 
-use super::{line::draw_line, quadratic};
+use super::quadratic;
 
 type Point = (f64, f64);
 
 fn draw_cubic_line(
-    context: CanvasRenderingContext2d,
+    context: &CanvasRenderingContext2d,
     p0: Point,
     p1: Point,
     p2: Point,
@@ -21,7 +20,7 @@ fn draw_cubic_line(
     context.stroke();
 }
 
-pub fn draw_smooth_line(context: CanvasRenderingContext2d, points: &Vec<(f64, f64)>) {
+pub fn draw_smooth_line(context: &CanvasRenderingContext2d, points: &Vec<(f64, f64)>) {
     if points.len() < 4 {
         quadratic::draw_smooth_line(context, points);
     } else {

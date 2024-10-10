@@ -1,9 +1,9 @@
 use leptos::{html, NodeRef};
 use wasm_bindgen::JsCast;
-use web_sys::CanvasRenderingContext2d;
+use web_sys::{CanvasRenderingContext2d, ImageData};
 
 
-pub fn get_context(canvas_ref: NodeRef<html::Canvas>) -> Option<CanvasRenderingContext2d> {
+pub fn get_context(canvas_ref: &NodeRef<html::Canvas>) -> Option<CanvasRenderingContext2d> {
     if let Some(canvas) = canvas_ref.get() {
         Some(
             canvas
@@ -16,4 +16,32 @@ pub fn get_context(canvas_ref: NodeRef<html::Canvas>) -> Option<CanvasRenderingC
     } else {
         None
     }
+}
+
+pub fn scale_canvas(canvas_ref: NodeRef<html::Canvas>) {
+    if let Some(canvas) = canvas_ref.get() {
+        let context = get_context(&canvas_ref).expect("No Context");
+
+            let device_pixel_ratio = web_sys::window().unwrap().device_pixel_ratio();
+            let width = canvas.client_width() as f64;
+            let height = canvas.client_height() as f64;
+
+            canvas.set_width((width * device_pixel_ratio) as u32);
+            canvas.set_height((height * device_pixel_ratio) as u32);
+
+            context
+                .scale(device_pixel_ratio, device_pixel_ratio)
+                .unwrap();
+    }
+}
+
+
+pub fn save_canvas_state(context: &CanvasRenderingContext2d, dimensions: (f64, f64)) -> ImageData {
+    context
+        .get_image_data(0.0, 0.0, dimensions.0, dimensions.1)
+        .expect("No Image Data to save")
+}
+
+pub fn restore_canvas_state(context: &CanvasRenderingContext2d, image_data: &ImageData) {
+    let _ = context.put_image_data(image_data, 0.0, 0.0);
 }

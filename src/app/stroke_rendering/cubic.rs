@@ -5,7 +5,7 @@ use super::quadratic;
 
 type Point = (f64, f64);
 
-fn draw_cubic_line(
+pub fn draw_cubic_line(
     context: &CanvasRenderingContext2d,
     p0: Point,
     p1: Point,

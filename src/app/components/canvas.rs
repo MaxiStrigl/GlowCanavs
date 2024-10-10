@@ -1,13 +1,14 @@
+use core::f64;
+
 use crate::app::helpers::canvas_helpers::*;
 use crate::app::helpers::mouse_helpers::handle_mouse_event;
+use crate::app::stroke_rendering::catmull_rom;
 use crate::app::{stroke_rendering::cubic::draw_smooth_line, stroke_rendering::segment::Segment};
 use leptos::*;
 use web_sys::{CanvasRenderingContext2d, ImageData, MouseEvent};
 
 type ContextRef = Option<CanvasRenderingContext2d>;
 type OptImageData = Option<ImageData>;
-
-
 
 #[component]
 pub fn Canvas() -> impl IntoView {
@@ -18,6 +19,8 @@ pub fn Canvas() -> impl IntoView {
     let (image_data, set_image_data) = create_signal(OptImageData::None);
 
     let (context_ref, set_context_ref) = create_signal(ContextRef::None);
+
+    let (points, set_points) = create_signal(Vec::<(f64, f64)>::new());
 
     let canvas_ref = create_node_ref::<html::Canvas>();
 
@@ -35,7 +38,9 @@ pub fn Canvas() -> impl IntoView {
 
         handle_mouse_event(ev, |coordinate| {
             set_current_segment.update(|seg| seg.push(coordinate));
+            set_points.update(|seg| { seg.clear(); seg.push(coordinate)});
         });
+
 
         let context = if context_ref.get().is_none() {
             let context = get_context(&canvas_ref);
@@ -44,6 +49,7 @@ pub fn Canvas() -> impl IntoView {
         } else {
             context_ref.get().expect("Context is None")
         };
+
 
         let image_data = save_canvas_state(&context, get_dimensions());
         set_image_data.set(Some(image_data));
@@ -68,16 +74,18 @@ pub fn Canvas() -> impl IntoView {
         let distance = (curr_x - prev_x).powi(2) + (curr_y - prev_y).powi(2).sqrt();
 
         //TODO: Dyncamic threshhold
-        if distance < 5.0 {
+        if distance < 10.0 {
             set_current_segment.update(|segment| segment.pop());
             return;
         }
 
+        set_points.update(|seg| seg.push(current_segment.get().peek()));
+
         if current_segment.get().len() == 2 {
-            let image_d = save_canvas_state(&context, get_dimensions());
-            set_image_data.set(Some(image_d));
+            // let image_d = save_canvas_state(&context, get_dimensions());
+            // set_image_data.set(Some(image_d));
         } else {
-            restore_canvas_state(&context, &image_data.get().expect("No Image Data"));
+            // restore_canvas_state(&context, &image_data.get().expect("No Image Data"));
         }
 
         draw_smooth_line(&context, &current_segment.get().get_points());
@@ -91,9 +99,13 @@ pub fn Canvas() -> impl IntoView {
 
         handle_mouse_event(ev, |coordinate| {
             set_current_segment.update(|segment| segment.push(coordinate));
+            set_points.update(|seg| seg.push(coordinate));
         });
 
         draw_smooth_line(&context, &current_segment.get().get_points());
+        restore_canvas_state(&context, &image_data.get().expect("No Image Data"));
+
+        catmull_rom::draw_smooth_line(&context, &points.get()); 
 
         set_current_segment.update(|segment| segment.clear());
     };

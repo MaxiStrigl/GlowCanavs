@@ -1,4 +1,3 @@
-
 #[derive(Clone)]
 pub struct Segment {
     points: Vec<(f64, f64)>,
@@ -15,8 +14,9 @@ impl Segment {
 
     pub fn push(&mut self, value: (f64, f64)) {
         if self.points.len() >= self.max_size {
-            let items_to_remove = self.points.len() - self.max_size + 1;
-            self.points.drain(0..items_to_remove);
+            self.points.remove(0);
+            self.points.remove(0);
+            self.points.remove(0);
         }
         self.points.push(value);
     }
@@ -35,7 +35,10 @@ impl Segment {
 
     pub fn peek(&mut self) -> (f64, f64) {
         let index = self.len() - 1;
-
         *self.points.get(index).expect("Stack is empty")
+    }
+
+    pub fn pop(&mut self) {
+        self.points.pop();
     }
 }

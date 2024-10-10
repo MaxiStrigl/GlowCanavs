@@ -69,10 +69,11 @@ pub fn Canvas() -> impl IntoView {
 
         //TODO: Dyncamic threshhold
         if distance < 5.0 {
+            set_current_segment.update(|segment| segment.pop());
             return;
         }
 
-        if current_segment.get().len() >= 4 {
+        if current_segment.get().len() == 2 {
             let image_d = save_canvas_state(&context, get_dimensions());
             set_image_data.set(Some(image_d));
         } else {

@@ -1,4 +1,5 @@
-use web_sys::CanvasRenderingContext2d;
+use wasm_bindgen::JsValue;
+use web_sys::{console::log_1, CanvasRenderingContext2d};
 
 use super::quadratic;
 
@@ -12,6 +13,7 @@ fn draw_cubic_line(
     p3: Point
 ) {
     context.begin_path();
+    context.set_stroke_style(&JsValue::from_str("white"));
     context.set_line_width(2.0);
     context.move_to(p0.0, p0.1);
 
@@ -21,9 +23,12 @@ fn draw_cubic_line(
 }
 
 pub fn draw_smooth_line(context: &CanvasRenderingContext2d, points: &Vec<(f64, f64)>) {
+    log_1(&JsValue::from_f64(points.len() as f64));
     if points.len() < 4 {
+        log_1(&JsValue::from_str("not cubic"));
         quadratic::draw_smooth_line(context, points);
     } else {
+        log_1(&JsValue::from_str("cubic"));
         let len = points.len();
         let p0 = *points.get(len - 4).expect("Expected Point 1 but is not");
         let p1 = *points.get(len - 3).expect("Expected Point 1 but is not");

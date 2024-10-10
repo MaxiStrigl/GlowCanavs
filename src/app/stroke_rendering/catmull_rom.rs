@@ -18,7 +18,6 @@ fn catmull_rom_spline(
     alpha: f64,
     num_segments: i32,
 ) {
-
     context.set_line_cap("round");
     context.set_stroke_style(&JsValue::from_str("white"));
     context.set_line_width(2.0);
@@ -32,6 +31,11 @@ fn catmull_rom_spline(
         let p1 = points[i + 1];
         let p2 = points[i + 2];
         let p3 = points[i + 3];
+
+
+        let distance = ((p2.0 - p1.0).powi(2) + (p2.1 - p1.1).powi(2)).sqrt().round();
+        let num_segments = distance as i32;
+
 
         for t in (0..num_segments).map(|t| t as f64 / num_segments as f64) {
             let t0 = 0.0;

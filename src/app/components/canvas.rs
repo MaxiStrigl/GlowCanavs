@@ -38,9 +38,11 @@ pub fn Canvas() -> impl IntoView {
 
         handle_mouse_event(ev, |coordinate| {
             set_current_segment.update(|seg| seg.push(coordinate));
-            set_points.update(|seg| { seg.clear(); seg.push(coordinate)});
+            set_points.update(|seg| {
+                seg.clear();
+                seg.push(coordinate)
+            });
         });
-
 
         let context = if context_ref.get().is_none() {
             let context = get_context(&canvas_ref);
@@ -49,7 +51,6 @@ pub fn Canvas() -> impl IntoView {
         } else {
             context_ref.get().expect("Context is None")
         };
-
 
         let image_data = save_canvas_state(&context, get_dimensions());
         set_image_data.set(Some(image_data));
@@ -105,15 +106,20 @@ pub fn Canvas() -> impl IntoView {
         draw_smooth_line(&context, &current_segment.get().get_points());
         restore_canvas_state(&context, &image_data.get().expect("No Image Data"));
 
-        catmull_rom::draw_smooth_line(&context, &points.get()); 
+        catmull_rom::draw_smooth_line(&context, &points.get());
 
         set_current_segment.update(|segment| segment.clear());
     };
 
     // Call scale_canvas when the component is mounted
     create_effect(move |_| {
-        scale_canvas(canvas_ref);
+        scale_canvas(&canvas_ref);
     });
+
+    window_event_listener(ev::resize, move |_| {
+        scale_canvas(&canvas_ref);
+    });
+
 
     view! {
         <div class="container" >

@@ -18,13 +18,18 @@ pub fn get_context(canvas_ref: &NodeRef<html::Canvas>) -> Option<CanvasRendering
     }
 }
 
-pub fn scale_canvas(canvas_ref: NodeRef<html::Canvas>) {
+pub fn scale_canvas(canvas_ref: &NodeRef<html::Canvas>) {
     if let Some(canvas) = canvas_ref.get() {
         let context = get_context(&canvas_ref).expect("No Context");
+
+
+            //TODO: Maybe adjust this to the whole content 
 
             let device_pixel_ratio = web_sys::window().unwrap().device_pixel_ratio();
             let width = canvas.client_width() as f64;
             let height = canvas.client_height() as f64;
+
+            let image_data = context.get_image_data(0.0, 0.0, width, height).expect("Failed to get ImageData");
 
             canvas.set_width((width * device_pixel_ratio) as u32);
             canvas.set_height((height * device_pixel_ratio) as u32);
@@ -32,6 +37,8 @@ pub fn scale_canvas(canvas_ref: NodeRef<html::Canvas>) {
             context
                 .scale(device_pixel_ratio, device_pixel_ratio)
                 .unwrap();
+
+            context.put_image_data(&image_data, 0.0, 0.0).expect("Failed to put ImageData");
     }
 }
 

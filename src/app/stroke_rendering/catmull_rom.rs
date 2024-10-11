@@ -9,14 +9,13 @@ pub fn draw_smooth_line(context: &CanvasRenderingContext2d, points: &Vec<(f64, f
         return;
     }
 
-    catmull_rom_spline(context, points, 0.8, 100);
+    catmull_rom_spline(context, points, 0.8);
 }
 
 fn catmull_rom_spline(
     context: &CanvasRenderingContext2d,
     points: &Vec<(f64, f64)>,
     alpha: f64,
-    num_segments: i32,
 ) {
     context.set_line_cap("round");
     context.set_stroke_style(&JsValue::from_str("white"));

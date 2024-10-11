@@ -15,7 +15,7 @@ fn draw_quadratic_line(
 
     context.begin_path();
     context.move_to(p0.0, p0.1);
-    context.set_stroke_style(&JsValue::from_str("yellow"));
+    context.set_stroke_style(&JsValue::from_str("white"));
     context.quadratic_curve_to(p1.0, p1.1, xc, yc);
     context.stroke();
 }

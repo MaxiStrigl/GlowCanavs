@@ -1,14 +1,25 @@
-use core::f64;
-
 use crate::app::helpers::canvas_helpers::*;
 use crate::app::helpers::mouse_helpers::handle_mouse_event;
 use crate::app::stroke_rendering::catmull_rom;
 use crate::app::{stroke_rendering::cubic::draw_smooth_line, stroke_rendering::segment::Segment};
+use js_sys::Math::{log, log2};
 use leptos::*;
+use wasm_bindgen::JsValue;
+use web_sys::console::log_1;
 use web_sys::{CanvasRenderingContext2d, ImageData, MouseEvent};
 
 type ContextRef = Option<CanvasRenderingContext2d>;
 type OptImageData = Option<ImageData>;
+type Stroke = Vec<(f64, f64)>;
+
+
+fn rerender_canvas(context: &CanvasRenderingContext2d, strokes: &Vec<Vec<(f64, f64)>>) {
+    context.reset();
+
+    for stroke in strokes {
+        catmull_rom::draw_smooth_line(&context, &stroke);
+    }
+}
 
 #[component]
 pub fn Canvas() -> impl IntoView {
@@ -23,6 +34,8 @@ pub fn Canvas() -> impl IntoView {
     let (points, set_points) = create_signal(Vec::<(f64, f64)>::new());
 
     let canvas_ref = create_node_ref::<html::Canvas>();
+
+    let mut strokes: Vec<Stroke> = Vec::new();
 
     let get_dimensions = move || {
         if let Some(canvas) = canvas_ref.get() {
@@ -107,6 +120,12 @@ pub fn Canvas() -> impl IntoView {
         restore_canvas_state(&context, &image_data.get().expect("No Image Data"));
 
         catmull_rom::draw_smooth_line(&context, &points.get());
+
+        strokes.push(points.get());
+
+        set_points.update(|list| list.clear());
+
+        rerender_canvas(&context, &strokes);
 
         set_current_segment.update(|segment| segment.clear());
     };

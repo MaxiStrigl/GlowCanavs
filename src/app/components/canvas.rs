@@ -1,8 +1,10 @@
 use crate::app::helpers::canvas_helpers::*;
+
+use crate::app::helpers::math_helpers::do_segments_intersect;
 use crate::app::helpers::mouse_helpers::handle_mouse_event;
 use crate::app::stroke_rendering::catmull_rom;
 use crate::app::{stroke_rendering::cubic::draw_smooth_line, stroke_rendering::segment::Segment};
-use js_sys::Math::{log, log2};
+use js_sys::Math::log2;
 use leptos::*;
 use wasm_bindgen::JsValue;
 use web_sys::console::log_1;
@@ -12,13 +14,47 @@ type ContextRef = Option<CanvasRenderingContext2d>;
 type OptImageData = Option<ImageData>;
 type Stroke = Vec<(f64, f64)>;
 
+fn does_line_intersect(strokes: &Vec<Stroke>, line: &Stroke) -> Vec<usize> {
+    let mut intersecting = false;
 
-fn rerender_canvas(context: &CanvasRenderingContext2d, strokes: &Vec<Vec<(f64, f64)>>) {
-    context.reset();
+    let mut intersecting_lines = Vec::<usize>::new();
 
-    for stroke in strokes {
-        catmull_rom::draw_smooth_line(&context, &stroke);
+    for s in 0..strokes.len() {
+        let stroke = strokes.get(s).expect("No Stroke");
+        if stroke == line {
+            continue;
+        }
+
+        for i in 0..stroke.len() - 1 {
+            let p1 = stroke.get(i).expect("No p1");
+            let q1 = stroke.get(i + 1).expect("No q1");
+
+            for j in 0..line.len() - 1 {
+                let p2 = line.get(j).expect("No p2");
+                let q2 = line.get(j + 1).expect("No q2");
+
+                let intersect = do_segments_intersect(*p1, *q1, *p2, *q2);
+
+                if intersect {
+                    intersecting = true;
+                    break;
+                }
+            }
+
+            if intersecting {
+                intersecting_lines.push(s);
+                break;
+            }
+        }
     }
+
+    intersecting_lines
+
+    // if intersecting {
+    //     log_1(&JsValue::from_str("Intersecting"));
+    // } else {
+    //     log_1(&JsValue::from_str("Not Intersecting"));
+    // }
 }
 
 #[component]
@@ -36,6 +72,8 @@ pub fn Canvas() -> impl IntoView {
     let canvas_ref = create_node_ref::<html::Canvas>();
 
     let mut strokes: Vec<Stroke> = Vec::new();
+
+    let mut count = 0;
 
     let get_dimensions = move || {
         if let Some(canvas) = canvas_ref.get() {
@@ -125,9 +163,16 @@ pub fn Canvas() -> impl IntoView {
 
         set_points.update(|list| list.clear());
 
-        rerender_canvas(&context, &strokes);
 
         set_current_segment.update(|segment| segment.clear());
+
+        let intersects = does_line_intersect(&strokes, strokes.get(strokes.len() - 1).expect("UPS"));
+
+        for intesect in intersects {
+            strokes.remove(intesect);
+        }
+
+        rerender_canvas(&context, &strokes);
     };
 
     // Call scale_canvas when the component is mounted
@@ -138,7 +183,6 @@ pub fn Canvas() -> impl IntoView {
     window_event_listener(ev::resize, move |_| {
         scale_canvas(&canvas_ref);
     });
-
 
     view! {
         <div class="container" >

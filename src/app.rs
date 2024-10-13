@@ -3,6 +3,7 @@ mod helpers;
 mod stroke_rendering;
 
 use components::canvas::Canvas;
+use components::bottombar::BottomBar;
 use leptos::*;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -24,6 +25,7 @@ pub fn App() -> impl IntoView {
     view! {
         <main class="container">
             <Canvas/>
+            <BottomBar/>
         </main>
     }
 }

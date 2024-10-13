@@ -2,6 +2,15 @@ use leptos::{html, NodeRef};
 use wasm_bindgen::JsCast;
 use web_sys::{CanvasRenderingContext2d, ImageData};
 
+use crate::app::stroke_rendering::catmull_rom;
+
+pub fn rerender_canvas(context: &CanvasRenderingContext2d, strokes: &Vec<Vec<(f64, f64)>>) {
+    context.reset();
+
+    for stroke in strokes {
+        catmull_rom::draw_smooth_line(&context, &stroke);
+    }
+}
 
 pub fn get_context(canvas_ref: &NodeRef<html::Canvas>) -> Option<CanvasRenderingContext2d> {
     if let Some(canvas) = canvas_ref.get() {

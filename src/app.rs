@@ -2,8 +2,8 @@ mod components;
 mod helpers;
 mod stroke_rendering;
 
-use components::canvas::Canvas;
 use components::bottombar::BottomBar;
+use components::canvas::Canvas;
 use leptos::*;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -21,11 +21,12 @@ struct GreetArgs<'a> {
 
 #[component]
 pub fn App() -> impl IntoView {
-
     view! {
         <main class="container">
             <Canvas/>
-            <BottomBar/>
+            <div class="bottom_bar_container">
+                <BottomBar/>
+            </div>
         </main>
     }
 }

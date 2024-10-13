@@ -3,12 +3,48 @@ body {
   margin: 0;
 }
 
+.bottom_bar_container {
+  position: absolute;
+  bottom: 0;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.bottom_bar {
+  width: fit-content;
+  position: absolute;
+  display: inline-flex;
+  padding: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #242424;
+}
+
+.button {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  padding: 10px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  border-radius: 10px;
+  background: #363636;
+}
+
 .my_canvas {
   display: flex;
   flex-direction: column;
   width: 100vw;
   height: 100vh;
-  background-color: #000000;
+  background-color: #121212;
 }
 
 .coordinate-display {

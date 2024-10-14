@@ -4,7 +4,6 @@ use crate::app::helpers::math_helpers::do_segments_intersect;
 use crate::app::helpers::mouse_helpers::handle_mouse_event;
 use crate::app::stroke_rendering::catmull_rom;
 use crate::app::{stroke_rendering::cubic::draw_smooth_line, stroke_rendering::segment::Segment};
-use js_sys::Math::log2;
 use leptos::*;
 use wasm_bindgen::JsValue;
 use web_sys::console::log_1;
@@ -72,8 +71,6 @@ pub fn Canvas() -> impl IntoView {
     let canvas_ref = create_node_ref::<html::Canvas>();
 
     let mut strokes: Vec<Stroke> = Vec::new();
-
-    let mut count = 0;
 
     let get_dimensions = move || {
         if let Some(canvas) = canvas_ref.get() {
@@ -163,10 +160,10 @@ pub fn Canvas() -> impl IntoView {
 
         set_points.update(|list| list.clear());
 
-
         set_current_segment.update(|segment| segment.clear());
 
-        let intersects = does_line_intersect(&strokes, strokes.get(strokes.len() - 1).expect("UPS"));
+        let intersects =
+            does_line_intersect(&strokes, strokes.get(strokes.len() - 1).expect("UPS"));
 
         for intesect in intersects {
             strokes.remove(intesect);
@@ -185,8 +182,6 @@ pub fn Canvas() -> impl IntoView {
     });
 
     view! {
-        <div class="container" >
-            <canvas class="my_canvas" node_ref=canvas_ref on:mousedown=handle_mouse_down on:mousemove=handle_mouse_move on:mouseup=handle_mouse_up> </canvas>
-        </div>
+        <canvas class="my_canvas" node_ref=canvas_ref on:mousedown=handle_mouse_down on:mousemove=handle_mouse_move on:mouseup=handle_mouse_up> </canvas>
     }
 }

@@ -2,8 +2,8 @@ mod components;
 mod helpers;
 mod stroke_rendering;
 
-use components::bottombar::BottomBar;
 use components::canvas::Canvas;
+use components::bottombar::BottomBar;
 use leptos::*;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;

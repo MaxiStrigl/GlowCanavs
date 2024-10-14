@@ -1,6 +1,4 @@
 use leptos::web_sys::{HtmlElement, MouseEvent};
-use wasm_bindgen::JsValue;
-use web_sys::console::log_1;
 
 type Point = (f64, f64);
 
@@ -33,7 +31,7 @@ pub fn do_segments_intersect(p1: Point, q1: Point, p2: Point, q2: Point) -> bool
     }
 
     // Check if point `r` lies on segment `pq`
-    fn on_segment(p: Point, q: Point, r: Point) -> bool {
+    fn _on_segment(p: Point, q: Point, r: Point) -> bool {
         r.0 <= p.0.max(q.0) && r.0 >= p.0.min(q.0) && r.1 <= p.1.max(q.1) && r.1 >= p.1.min(q.1)
     }
 
@@ -50,4 +48,50 @@ pub fn do_segments_intersect(p1: Point, q1: Point, p2: Point, q2: Point) -> bool
     false
 }
 
+pub fn does_line_intersect(strokes: &Vec<Vec<(f64, f64)>>, line: &Vec<(f64, f64)>) -> Vec<usize> {
+    let mut intersecting = false;
+
+    let mut intersecting_lines = Vec::<usize>::new();
+
+    for s in 0..strokes.len() {
+        let stroke = strokes.get(s).expect("No Stroke");
+        if stroke == line {
+            continue;
+        }
+
+        for i in 0..stroke.len() - 1 {
+            let p1 = stroke.get(i).expect("No p1");
+            let q1 = stroke.get(i + 1).expect("No q1");
+
+            intersecting = false;
+
+            for j in 0..line.len() - 1 {
+                let p2 = line.get(j).expect("No p2");
+                let q2 = line.get(j + 1).expect("No q2");
+
+                let intersect = do_segments_intersect(*p1, *q1, *p2, *q2);
+
+                if intersect {
+                    intersecting = true;
+                    break;
+                }
+            }
+
+            if intersecting {
+                intersecting_lines.push(s);
+                break;
+            }
+        }
+    }
+
+    intersecting_lines.sort();
+
+    intersecting_lines
+
+    // if intersecting {
+    //     log_1(&JsValue::from_str("Intersecting"));
+    // } else {
+    //     log_1(&JsValue::from_str("Not Intersecting"));
+    // }
+}
 

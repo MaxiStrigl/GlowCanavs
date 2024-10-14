@@ -1,13 +1,15 @@
 use leptos::{html, NodeRef};
-use wasm_bindgen::JsCast;
-use web_sys::{CanvasRenderingContext2d, ImageData};
+use wasm_bindgen::{JsCast, JsValue};
+use web_sys::{console::log_1, CanvasRenderingContext2d, ImageData};
 
 use crate::app::stroke_rendering::catmull_rom;
 
-pub fn rerender_canvas(context: &CanvasRenderingContext2d, strokes: &Vec<Vec<(f64, f64)>>) {
-    context.reset();
+pub fn rerender_canvas(context: &CanvasRenderingContext2d,  strokes: &Vec<Vec<(f64, f64)>>) {
+    log_1(&JsValue::from_str("Rerender"));
+    context.clear_rect(0.0, 0.0, 1000.0, 1000.0); //TODO: Add dimensions
 
     for stroke in strokes {
+        log_1(&JsValue::from_str("Rerendering"));
         catmull_rom::draw_smooth_line(&context, &stroke);
     }
 }

@@ -24,9 +24,7 @@ pub fn App() -> impl IntoView {
     view! {
         <main class="container">
             <Canvas/>
-            <div class="bottom_bar_container">
-                <BottomBar/>
-            </div>
-        </main>
+            <BottomBar/>
+       </main>
     }
 }

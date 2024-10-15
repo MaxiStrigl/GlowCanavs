@@ -130,6 +130,10 @@ pub fn Canvas() -> impl IntoView {
                     i += 1;
                 }
             }
+
+            Mode::PixelEraser => {
+
+            }
         }
 
         set_points.update(|list| list.clear());

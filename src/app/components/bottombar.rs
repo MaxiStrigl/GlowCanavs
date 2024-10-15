@@ -15,9 +15,18 @@ pub fn BottomBar() -> impl IntoView {
             <div class="button" class:active=move || getter.get() == Mode::Pen on:click=on_pen_click>
                 <img src="public/pen.svg" class="icon pen" alt="Tauri logo"/>
             </div>
+
             <div class="button" class:active=move || getter.get() == Mode::Eraser on:click=on_eraser_click>
                 <img src="public/eraser.svg" class="icon pen" alt="Tauri logo"/>
             </div>
+
+            <div style="display: flex; align-items: center;">
+                <div class="button" class:active=move || getter.get() == Mode::Eraser on:click=on_eraser_click>
+                    <img src="public/eraser.svg" class="icon pen" alt="Tauri logo"/>
+                </div>
+                <img src="public/caret.svg"/>
+            </div>
+
         </div>
     }
 }

@@ -49,7 +49,7 @@ pub fn do_segments_intersect(p1: Point, q1: Point, p2: Point, q2: Point) -> bool
 }
 
 pub fn does_line_intersect(strokes: &Vec<Vec<(f64, f64)>>, line: &Vec<(f64, f64)>) -> Vec<usize> {
-    let mut intersecting = false;
+    let mut intersecting: bool;
 
     let mut intersecting_lines = Vec::<usize>::new();
 

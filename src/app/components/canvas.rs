@@ -1,4 +1,4 @@
-use std::default;
+use std::cmp;
 
 use crate::app::enums::drawing_mode::Mode;
 use crate::app::enums::mouse_button::MouseButton;
@@ -14,15 +14,12 @@ use web_sys::{CanvasRenderingContext2d, ImageData, MouseEvent};
 
 type ContextRef = Option<CanvasRenderingContext2d>;
 type OptImageData = Option<ImageData>;
-type Stroke = Vec<(f64, f64)>;
 
 #[component]
 pub fn Canvas() -> impl IntoView {
     let (is_mouse_down, set_is_mouse_down) = create_signal(MouseButton::None);
 
     let (current_segment, set_current_segment) = create_signal(Segment::new(4));
-
-    let (image_data, set_image_data) = create_signal(OptImageData::None);
 
     let (context_ref, set_context_ref) = create_signal(ContextRef::None);
 
@@ -32,9 +29,9 @@ pub fn Canvas() -> impl IntoView {
 
     let current_mode = use_context::<ReadSignal<Mode>>();
 
-    let mut strokes: Vec<Stroke> = Vec::new();
+    let (strokes, set_strokes) = create_signal(Vec::<Vec<(f64, f64)>>::new());
 
-    let offset: (f64, f64) = (50.0, 50.0);
+    let (offset, set_offset) = create_signal((0.0, 0.0));
 
     let get_dimensions = move || {
         if let Some(canvas) = canvas_ref.get() {
@@ -46,10 +43,17 @@ pub fn Canvas() -> impl IntoView {
 
     //MOUSE DOWN
     let handle_mouse_down = move |ev: MouseEvent| {
-        set_is_mouse_down.update(|state| *state = MouseButton::Left);
+        set_is_mouse_down.update(|state| {
+            *state = match ev.button() {
+                0 => MouseButton::Left,
+                1 => MouseButton::Middle,
+
+                _default => MouseButton::None,
+            }
+        });
 
         handle_mouse_event(ev, |coordinate| {
-            let coordinate = (coordinate.0 + offset.0, coordinate.1 + offset.1);
+            let coordinate = (coordinate.0 - offset.get().0, coordinate.1 - offset.get().1);
             set_current_segment.update(|seg| seg.push(coordinate));
             set_points.update(|seg| {
                 seg.clear();
@@ -57,102 +61,124 @@ pub fn Canvas() -> impl IntoView {
             });
         });
 
-        let context = if context_ref.get().is_none() {
+        if context_ref.get().is_none() {
             let context = get_context(&canvas_ref);
             set_context_ref.set(context);
-            context_ref.get().expect("Context is None")
-        } else {
-            context_ref.get().expect("Context is None")
-        };
+            context_ref.get().expect("Context is None");
 
-        let image_data = save_canvas_state(&context, get_dimensions());
-        set_image_data.set(Some(image_data));
+        }
     };
 
     //MOUSE MOVE
     let handle_mouse_move = move |ev: MouseEvent| match is_mouse_down.get() {
         MouseButton::Left => {
             let context = context_ref.get().expect("Context is None");
-
-            let (prev_x, prev_y) = current_segment.get().peek();
+            let (prev_x, prev_y) = *points.get().last().expect("No Previous Elements");
 
             handle_mouse_event(ev, |coordinate| {
-                let coordinate = (coordinate.0 + offset.0, coordinate.1 + offset.1);
-                set_current_segment.update(|segment| segment.push(coordinate));
+                let coordinate = (coordinate.0 - offset.get().0, coordinate.1 - offset.get().1);
+                set_points.update(|seg| seg.push(coordinate));
             });
 
-            let (curr_x, curr_y) = current_segment.get().peek();
+            let (curr_x, curr_y) = *points.get().last().expect("");
 
             let distance = (curr_x - prev_x).powi(2) + (curr_y - prev_y).powi(2).sqrt();
 
             if distance < 10.0 {
                 set_current_segment.update(|segment| segment.pop());
+                set_points.update(|seg| {
+                    seg.pop().expect("");
+                });
                 return;
             }
 
-            let coordinate = current_segment.get().peek();
-
-            set_points.update(|seg| seg.push(coordinate));
+            let len = if points.get().len() < 3 {
+                0
+            } else {
+                points.get().len() - 3
+            };
 
             if current_mode.expect("Invalid Mode").get() == Mode::Pen {
-                draw_smooth_line(&context, &current_segment.get().get_points());
+                draw_smooth_line(&context, &points.get()[len..].to_vec());
             }
+        }
+        MouseButton::Middle => {
+            let context = context_ref.get().expect("Context is None");
+
+            let (prev_x, prev_y) = *points.get().last().expect("Lol");
+
+            let (curr_x, curr_y) = (ev.x() as f64, ev.y() as f64);
+
+            set_points.update(|points| points.push((curr_x, curr_y)));
+
+            let delta = (curr_x - prev_x, curr_y - prev_y);
+
+            let offset = offset.get();
+
+            let new_offset = (offset.0 + delta.0, offset.1 + delta.1);
+
+            set_offset.update(|offset| *offset = new_offset);
+
+            let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+            let _ = context.translate(offset.0, offset.1);
+
+            rerender_canvas(&context, &strokes.get());
         }
         _default => {}
     };
 
     //Mouse UP
     let handle_mouse_up = move |ev: MouseEvent| {
-        set_is_mouse_down.update(|state| *state = MouseButton::None);
-
         let context = context_ref.get().expect("Context is None");
 
-        handle_mouse_event(ev, |coordinate| { 
-            let coordinate = (coordinate.0 + offset.0, coordinate.1 + offset.1);
-            set_current_segment.update(|segment| segment.push(coordinate));
-            set_points.update(|seg| seg.push(coordinate));
-        });
+        match is_mouse_down.get() {
+            MouseButton::Left => {
+                handle_mouse_event(ev, |coordinate| {
+                    let coordinate = (coordinate.0 + offset.get().0, coordinate.1 + offset.get().1);
+                    set_current_segment.update(|segment| segment.push(coordinate));
+                    set_points.update(|seg| seg.push(coordinate));
+                });
 
-        log_1(&JsValue::from_f64(points.get().len() as f64));
+                match current_mode.expect("Invalid Mode").get() {
+                    Mode::Pen => {
+                        catmull_rom::draw_smooth_line(&context, &points.get());
+                        set_strokes.update(|strokes| strokes.push(points.get()));
+                    }
 
-        // draw_smooth_line(&context, &current_segment.get().get_points());
-        // restore_canvas_state(&context, &image_data.get().expect("No Image Data"));
+                    Mode::Eraser => {
+                        let intersects = does_line_intersect(&strokes.get(), &points.get());
 
-        match current_mode.expect("Invalid Mode").get() {
-            Mode::Pen => {
-                catmull_rom::draw_smooth_line(&context, &points.get());
-                strokes.push(points.get());
-            }
+                        let mut i = 0;
+                        for intesect in intersects {
+                            set_strokes.update(|strokes| {
+                                strokes.remove(intesect - i);
+                            });
+                            i += 1;
+                        }
+                    }
 
-            Mode::Eraser => {
-                let intersects = does_line_intersect(&strokes, &points.get());
-
-                log_1(&JsValue::from_str(&format!(
-                    "Intersects: {}",
-                    intersects.len()
-                )));
-
-                let mut i = 0;
-                for intesect in intersects {
-                    strokes.remove(intesect - i);
-                    i += 1;
+                    Mode::PixelEraser => {}
                 }
+
+                rerender_canvas(&context, &strokes.get());
             }
 
-            Mode::PixelEraser => {}
+            _default => {}
         }
 
         set_points.update(|list| list.clear());
 
         set_current_segment.update(|segment| segment.clear());
 
-        rerender_canvas(&context, &strokes);
+        set_is_mouse_down.update(|state| *state = MouseButton::None);
     };
 
     // Call scale_canvas when the component is mounted
     create_effect(move |_| {
         scale_canvas(&canvas_ref);
-        get_context(&canvas_ref).expect("No Canvas").translate(-offset.0, -offset.1);
+        let _ = get_context(&canvas_ref)
+            .expect("No Canvas")
+            .translate(-offset.get().0, -offset.get().1);
     });
 
     window_event_listener(ev::resize, move |_| {

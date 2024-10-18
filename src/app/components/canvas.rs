@@ -1,4 +1,6 @@
 use std::cmp;
+use std::time::Duration;
+use std::time::Instant;
 
 use crate::app::enums::drawing_mode::Mode;
 use crate::app::enums::mouse_button::MouseButton;
@@ -7,6 +9,7 @@ use crate::app::helpers::math_helpers::*;
 use crate::app::helpers::mouse_helpers::handle_mouse_event;
 use crate::app::stroke_rendering::catmull_rom;
 use crate::app::{stroke_rendering::cubic::draw_smooth_line, stroke_rendering::segment::Segment};
+
 use leptos::*;
 use wasm_bindgen::JsValue;
 use web_sys::console::log_1;
@@ -33,7 +36,9 @@ pub fn Canvas() -> impl IntoView {
 
     let (offset, set_offset) = create_signal((0.0, 0.0));
 
-    let get_dimensions = move || {
+    let (last_move_time, set_last_move_time) = create_signal(js_sys::Date::now());
+
+    let get_dimensions =move || {
         if let Some(canvas) = canvas_ref.get() {
             (canvas.width() as f64, canvas.height() as f64)
         } else {
@@ -65,66 +70,75 @@ pub fn Canvas() -> impl IntoView {
             let context = get_context(&canvas_ref);
             set_context_ref.set(context);
             context_ref.get().expect("Context is None");
-
         }
     };
 
     //MOUSE MOVE
-    let handle_mouse_move = move |ev: MouseEvent| match is_mouse_down.get() {
-        MouseButton::Left => {
-            let context = context_ref.get().expect("Context is None");
-            let (prev_x, prev_y) = *points.get().last().expect("No Previous Elements");
+    let handle_mouse_move = move |ev: MouseEvent| {
+        let now = js_sys::Date::now();
 
-            handle_mouse_event(ev, |coordinate| {
-                let coordinate = (coordinate.0 - offset.get().0, coordinate.1 - offset.get().1);
-                set_points.update(|seg| seg.push(coordinate));
-            });
+        if now - last_move_time.get() < 16.0 {
+            return;
+        }
 
-            let (curr_x, curr_y) = *points.get().last().expect("");
+        set_last_move_time.update(|time| *time = now);
 
-            let distance = (curr_x - prev_x).powi(2) + (curr_y - prev_y).powi(2).sqrt();
+        match is_mouse_down.get() {
+            MouseButton::Left => {
+                let context = context_ref.get().expect("Context is None");
+                let (prev_x, prev_y) = *points.get().last().expect("No Previous Elements");
 
-            if distance < 10.0 {
-                set_current_segment.update(|segment| segment.pop());
-                set_points.update(|seg| {
-                    seg.pop().expect("");
+                handle_mouse_event(ev, |coordinate| {
+                    let coordinate = (coordinate.0 - offset.get().0, coordinate.1 - offset.get().1);
+                    set_points.update(|seg| seg.push(coordinate));
                 });
-                return;
+
+                let (curr_x, curr_y) = *points.get().last().expect("");
+
+                let distance = (curr_x - prev_x).powi(2) + (curr_y - prev_y).powi(2).sqrt();
+
+                if distance < 10.0 {
+                    set_current_segment.update(|segment| segment.pop());
+                    set_points.update(|seg| {
+                        seg.pop().expect("");
+                    });
+                    return;
+                }
+
+                let len = if points.get().len() < 3 {
+                    0
+                } else {
+                    points.get().len() - 3
+                };
+
+                if current_mode.expect("Invalid Mode").get() == Mode::Pen {
+                    draw_smooth_line(&context, &points.get()[len..].to_vec());
+                }
             }
+            MouseButton::Middle => {
+                let context = context_ref.get().expect("Context is None");
 
-            let len = if points.get().len() < 3 {
-                0
-            } else {
-                points.get().len() - 3
-            };
+                let (prev_x, prev_y) = *points.get().last().expect("Lol");
 
-            if current_mode.expect("Invalid Mode").get() == Mode::Pen {
-                draw_smooth_line(&context, &points.get()[len..].to_vec());
+                let (curr_x, curr_y) = (ev.x() as f64, ev.y() as f64);
+
+                set_points.update(|points| points.push((curr_x, curr_y)));
+
+                let delta = (curr_x - prev_x, curr_y - prev_y);
+
+                let offset = offset.get();
+
+                let new_offset = (offset.0 + delta.0, offset.1 + delta.1);
+
+                set_offset.update(|offset| *offset = new_offset);
+
+                let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
+                let _ = context.translate(offset.0, offset.1);
+
+                rerender_canvas(&context, &strokes.get());
             }
+            _default => {}
         }
-        MouseButton::Middle => {
-            let context = context_ref.get().expect("Context is None");
-
-            let (prev_x, prev_y) = *points.get().last().expect("Lol");
-
-            let (curr_x, curr_y) = (ev.x() as f64, ev.y() as f64);
-
-            set_points.update(|points| points.push((curr_x, curr_y)));
-
-            let delta = (curr_x - prev_x, curr_y - prev_y);
-
-            let offset = offset.get();
-
-            let new_offset = (offset.0 + delta.0, offset.1 + delta.1);
-
-            set_offset.update(|offset| *offset = new_offset);
-
-            let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-            let _ = context.translate(offset.0, offset.1);
-
-            rerender_canvas(&context, &strokes.get());
-        }
-        _default => {}
     };
 
     //Mouse UP

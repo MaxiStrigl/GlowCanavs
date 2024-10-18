@@ -4,8 +4,8 @@ use web_sys::{console::log_1, CanvasRenderingContext2d, ImageData};
 
 use crate::app::stroke_rendering::catmull_rom;
 
-pub fn rerender_canvas(context: &CanvasRenderingContext2d,  strokes: &Vec<Vec<(f64, f64)>>) {
-    context.clear_rect(-100.0, -100.0, 1000.0, 1000.0); //TODO: Add dimensions
+pub fn rerender_canvas(context: &CanvasRenderingContext2d,  strokes: &Vec<Vec<(f64, f64)>>, offset: (f64, f64)) {
+    context.clear_rect(-offset.0, -offset.1, context.canvas().unwrap().width() as f64, context.canvas().unwrap().height() as f64);
 
     for stroke in strokes {
         catmull_rom::draw_smooth_line(&context, &stroke);

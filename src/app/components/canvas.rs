@@ -133,9 +133,9 @@ pub fn Canvas() -> impl IntoView {
                 set_offset.update(|offset| *offset = new_offset);
 
                 let _ = context.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-                let _ = context.translate(offset.0, offset.1);
+                let _ = context.translate(new_offset.0, new_offset.1);
 
-                rerender_canvas(&context, &strokes.get());
+                rerender_canvas(&context, &strokes.get(), new_offset);
             }
             _default => {}
         }
@@ -174,7 +174,7 @@ pub fn Canvas() -> impl IntoView {
                     Mode::PixelEraser => {}
                 }
 
-                rerender_canvas(&context, &strokes.get());
+                rerender_canvas(&context, &strokes.get(), offset.get());
             }
 
             _default => {}

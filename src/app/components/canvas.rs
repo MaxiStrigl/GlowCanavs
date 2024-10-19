@@ -1,3 +1,5 @@
+use std::f64;
+
 use crate::app::enums::drawing_mode::Mode;
 use crate::app::enums::mouse_button::MouseButton;
 use crate::app::helpers::canvas_helpers::*;
@@ -23,13 +25,15 @@ pub fn Canvas() -> impl IntoView {
 
     let canvas_ref = create_node_ref::<html::Canvas>();
 
+    let (last_move_time, set_last_move_time) = create_signal(js_sys::Date::now());
+
     let current_mode = use_context::<ReadSignal<Mode>>();
 
     let (strokes, set_strokes) = create_signal(Vec::<Vec<(f64, f64)>>::new());
 
     let (offset, set_offset) = create_signal((0.0, 0.0));
 
-    let (last_move_time, set_last_move_time) = create_signal(js_sys::Date::now());
+    let (redo_stack, set_redo_stack) = create_signal(Vec::<Vec<(f64, f64)>>::new());
 
     let get_dimensions = move || {
         if let Some(canvas) = canvas_ref.get() {
@@ -38,6 +42,8 @@ pub fn Canvas() -> impl IntoView {
             (-1.0, -1.0)
         }
     };
+
+    let window = web_sys::window().unwrap();
 
     //MOUSE DOWN
     let handle_mouse_down = move |ev: MouseEvent| {
@@ -164,6 +170,8 @@ pub fn Canvas() -> impl IntoView {
                     Mode::Pen => {
                         catmull_rom::draw_smooth_line(&context, &points.get());
                         set_strokes.update(|strokes| strokes.push(points.get()));
+
+                        set_redo_stack.update(|stack| stack.clear());
                     }
 
                     Mode::Eraser => {
@@ -176,6 +184,8 @@ pub fn Canvas() -> impl IntoView {
                             });
                             i += 1;
                         }
+
+                        set_redo_stack.update(|stack| stack.clear());
                     }
 
                     Mode::PixelEraser => {}
@@ -198,6 +208,40 @@ pub fn Canvas() -> impl IntoView {
         let _ = get_context(&canvas_ref)
             .expect("No Canvas")
             .translate(-offset.get().0, -offset.get().1);
+    });
+
+    let undo = move || {
+        let last_action = strokes.get().pop();
+        let context = context_ref.get().expect("Context is None");
+        set_strokes.update(|strokes| {
+            if strokes.len() > 0 {
+                set_redo_stack.update(|redo| redo.push(last_action.expect("Damn")));
+                strokes.remove(strokes.len() - 1);
+            }
+        });
+        rerender_canvas(&context, &strokes.get(), offset.get());
+    };
+
+    let redo = move || {
+        let redo_action = redo_stack.get().pop();
+        let context = context_ref.get().expect("Context is None");
+        set_redo_stack.update(|redo| {
+            if redo.len() > 0 {
+                set_strokes.update(|strokes| strokes.push(redo_action.expect("Damn")));
+                redo.remove(redo.len() - 1);
+            }
+        });
+        rerender_canvas(&context, &strokes.get(), offset.get());
+    };
+
+    window_event_listener(ev::keydown, move |ev| {
+        if ev.ctrl_key() && ev.key() == "z" {
+            undo();
+        }
+
+        if ev.ctrl_key() && ev.key() == "Z" {
+            redo();
+        }
     });
 
     window_event_listener(ev::resize, move |_| {

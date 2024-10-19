@@ -1,28 +1,21 @@
-use std::cmp;
-use std::time::Duration;
-use std::time::Instant;
-
 use crate::app::enums::drawing_mode::Mode;
 use crate::app::enums::mouse_button::MouseButton;
 use crate::app::helpers::canvas_helpers::*;
 use crate::app::helpers::math_helpers::*;
 use crate::app::helpers::mouse_helpers::handle_mouse_event;
 use crate::app::stroke_rendering::catmull_rom;
-use crate::app::{stroke_rendering::cubic::draw_smooth_line, stroke_rendering::segment::Segment};
+use crate::app::stroke_rendering::cubic::draw_smooth_line;
 
 use leptos::*;
 use wasm_bindgen::JsValue;
 use web_sys::console::log_1;
-use web_sys::{CanvasRenderingContext2d, ImageData, MouseEvent};
+use web_sys::{CanvasRenderingContext2d, MouseEvent};
 
 type ContextRef = Option<CanvasRenderingContext2d>;
-type OptImageData = Option<ImageData>;
 
 #[component]
 pub fn Canvas() -> impl IntoView {
     let (is_mouse_down, set_is_mouse_down) = create_signal(MouseButton::None);
-
-    let (current_segment, set_current_segment) = create_signal(Segment::new(4));
 
     let (context_ref, set_context_ref) = create_signal(ContextRef::None);
 
@@ -38,7 +31,7 @@ pub fn Canvas() -> impl IntoView {
 
     let (last_move_time, set_last_move_time) = create_signal(js_sys::Date::now());
 
-    let get_dimensions =move || {
+    let get_dimensions = move || {
         if let Some(canvas) = canvas_ref.get() {
             (canvas.width() as f64, canvas.height() as f64)
         } else {
@@ -57,14 +50,26 @@ pub fn Canvas() -> impl IntoView {
             }
         });
 
-        handle_mouse_event(ev, |coordinate| {
-            let coordinate = (coordinate.0 - offset.get().0, coordinate.1 - offset.get().1);
-            set_current_segment.update(|seg| seg.push(coordinate));
-            set_points.update(|seg| {
-                seg.clear();
-                seg.push(coordinate)
-            });
-        });
+        match is_mouse_down.get() {
+            MouseButton::Left => {
+                handle_mouse_event(ev, |coordinate| {
+                    let coordinate = (coordinate.0 - offset.get().0, coordinate.1 - offset.get().1);
+                    set_points.update(|seg| {
+                        seg.clear();
+                        seg.push(coordinate)
+                    });
+                });
+            }
+            MouseButton::Middle => {
+                handle_mouse_event(ev, |coordinate| {
+                    set_points.update(|seg| {
+                        seg.clear();
+                        seg.push(coordinate)
+                    });
+                });
+            }
+            _default => {}
+        }
 
         if context_ref.get().is_none() {
             let context = get_context(&canvas_ref);
@@ -98,7 +103,6 @@ pub fn Canvas() -> impl IntoView {
                 let distance = (curr_x - prev_x).powi(2) + (curr_y - prev_y).powi(2).sqrt();
 
                 if distance < 10.0 {
-                    set_current_segment.update(|segment| segment.pop());
                     set_points.update(|seg| {
                         seg.pop().expect("");
                     });
@@ -128,7 +132,11 @@ pub fn Canvas() -> impl IntoView {
 
                 let offset = offset.get();
 
+                log_1(&JsValue::from_str(&format!("({}, {})", offset.0, offset.1)));
+
                 let new_offset = (offset.0 + delta.0, offset.1 + delta.1);
+
+                log_1(&JsValue::from_str(&format!("({}, {})", offset.0, offset.1)));
 
                 set_offset.update(|offset| *offset = new_offset);
 
@@ -149,7 +157,6 @@ pub fn Canvas() -> impl IntoView {
             MouseButton::Left => {
                 handle_mouse_event(ev, |coordinate| {
                     let coordinate = (coordinate.0 + offset.get().0, coordinate.1 + offset.get().1);
-                    set_current_segment.update(|segment| segment.push(coordinate));
                     set_points.update(|seg| seg.push(coordinate));
                 });
 
@@ -181,8 +188,6 @@ pub fn Canvas() -> impl IntoView {
         }
 
         set_points.update(|list| list.clear());
-
-        set_current_segment.update(|segment| segment.clear());
 
         set_is_mouse_down.update(|state| *state = MouseButton::None);
     };

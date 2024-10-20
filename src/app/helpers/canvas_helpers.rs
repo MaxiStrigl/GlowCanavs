@@ -1,6 +1,6 @@
 use leptos::{html, NodeRef};
-use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{console::log_1, CanvasRenderingContext2d, ImageData};
+use wasm_bindgen::JsCast;
+use web_sys::{CanvasRenderingContext2d, ImageData};
 
 use crate::app::stroke_rendering::catmull_rom;
 

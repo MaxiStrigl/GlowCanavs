@@ -1,4 +1,3 @@
-use crate::app::enums::drawing_mode::Mode;
 use leptos::*;
 
 #[component]

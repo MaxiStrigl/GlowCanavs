@@ -1,8 +1,9 @@
 use crate::app::enums::drawing_mode::Mode;
+use ev::MouseEvent;
 use leptos::*;
 
 #[component]
-pub fn BottomBar() -> impl IntoView {
+pub fn BottomBar<F>(on_click:F)  -> impl IntoView where F:Fn(MouseEvent) + 'static {
     let setter = use_context::<WriteSignal<Mode>>().expect("to have found the setter provided");
     let getter = use_context::<ReadSignal<Mode>>().expect("to have found the setter provided");
 
@@ -21,7 +22,7 @@ pub fn BottomBar() -> impl IntoView {
             </div>
 
             <div style="display: flex; align-items: center;">
-                <div class="button" class:active=move || getter.get() == Mode::Eraser on:click=on_eraser_click>
+                <div class="button"  on:click=on_click>
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                         <circle cx="8" cy="8" fill="white" r="8" />
                     </svg>

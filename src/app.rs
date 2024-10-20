@@ -26,15 +26,17 @@ struct GreetArgs<'a> {
 pub fn App() -> impl IntoView {
     let (current_mode, set_current_mode) = create_signal(Mode::Pen);
 
+    let (show_popup, set_show_popup) = create_signal(false);
+
     provide_context(current_mode);
     provide_context(set_current_mode);
 
     view! {
         <main class="container">
             <Canvas/>
-            <div class="ui-container">
-                <Popover/>
-                <BottomBar/>
+            <div class="ui-container" >
+                <Popover show=show_popup/>
+                <BottomBar on_click=move |_| set_show_popup.update(|value| *value = !*value)/>
             </div>
         </main>
     }

@@ -49,8 +49,11 @@ main {
   margin-bottom: 20px;
 }
 
-.popover-container {
+.hidden {
   display: none;
+}
+
+.popover-container {
   width: 138px;
   height: 90px;
 

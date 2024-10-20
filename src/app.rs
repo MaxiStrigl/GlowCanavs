@@ -1,10 +1,11 @@
 mod components;
+mod enums;
 mod helpers;
 mod stroke_rendering;
-mod enums;
 
-use components::canvas::Canvas;
 use components::bottombar::BottomBar;
+use components::canvas::Canvas;
+use components::popover::Popover;
 use enums::drawing_mode::Mode;
 use leptos::*;
 use serde::{Deserialize, Serialize};
@@ -16,8 +17,6 @@ extern "C" {
     async fn invoke(cmd: &str, args: JsValue) -> JsValue;
 }
 
-
-
 #[derive(Serialize, Deserialize)]
 struct GreetArgs<'a> {
     name: &'a str,
@@ -25,7 +24,6 @@ struct GreetArgs<'a> {
 
 #[component]
 pub fn App() -> impl IntoView {
-
     let (current_mode, set_current_mode) = create_signal(Mode::Pen);
 
     provide_context(current_mode);
@@ -34,7 +32,10 @@ pub fn App() -> impl IntoView {
     view! {
         <main class="container">
             <Canvas/>
-            <BottomBar/>
-       </main>
+            <div class="ui-container">
+                <Popover/>
+                <BottomBar/>
+            </div>
+        </main>
     }
 }

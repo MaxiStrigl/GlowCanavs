@@ -22,7 +22,9 @@ pub fn BottomBar() -> impl IntoView {
 
             <div style="display: flex; align-items: center;">
                 <div class="button" class:active=move || getter.get() == Mode::Eraser on:click=on_eraser_click>
-                    <img src="public/eraser.svg" class="icon pen" alt="Tauri logo"/>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" fill="white" r="8" />
+                    </svg>
                 </div>
                 <img src="public/caret.svg"/>
             </div>

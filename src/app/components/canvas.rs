@@ -1,5 +1,3 @@
-use std::f64;
-
 use crate::app::enums::drawing_mode::Mode;
 use crate::app::enums::mouse_button::MouseButton;
 use crate::app::helpers::canvas_helpers::*;

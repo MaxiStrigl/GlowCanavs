@@ -21,14 +21,16 @@ pub fn BottomBar<F>(on_click:F)  -> impl IntoView where F:Fn(MouseEvent) + 'stat
                 <img src="public/eraser.svg" class="icon pen" alt="Tauri logo"/>
             </div>
 
-            <div style="display: flex; align-items: center;">
-                <div class="button"  on:click=on_click>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" fill="white" r="8" />
-                    </svg>
-                </div>
-                <img src="public/caret.svg"/>
+            <div class="button"  on:click=on_click>
+                <div class="color-circle"/>
             </div>
+
+            // <div style="display: flex; align-items: center;">
+            //     <div class="button"  on:click=on_click>
+            //         <div class="color-circle"/>
+            //     </div>
+            //     <img src="public/caret.svg"/>
+            // </div>
 
         </div>
     }

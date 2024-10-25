@@ -1,11 +1,11 @@
 use leptos::*;
 
 #[component]
-pub fn ColorDisplay() -> impl IntoView {
+pub fn ColorDisplay(color: String) -> impl IntoView {
     view! {
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" fill="white" r="8" />
-        </svg>
-
+       <div class="color-display" >
+            <div class="color-circle" style:background-color=color.clone()/>
+            <div>{color}</div>
+       </div>
     }
 }

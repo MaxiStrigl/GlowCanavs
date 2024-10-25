@@ -1,3 +1,5 @@
+use std::i32;
+
 use wasm_bindgen::JsValue;
 use web_sys::CanvasRenderingContext2d;
 
@@ -9,16 +11,20 @@ pub fn draw_smooth_line(context: &CanvasRenderingContext2d, points: &Vec<(f64, f
         return;
     }
 
-    catmull_rom_spline(context, points, 0.8);
+    catmull_rom_spline(context, points, 0.8, i32::MAX);
 }
 
 fn catmull_rom_spline(
     context: &CanvasRenderingContext2d,
     points: &Vec<(f64, f64)>,
     alpha: f64,
+    color: i32,
 ) {
+
+    let hex = format!("{:#x}", color);
+
     context.set_line_cap("round");
-    context.set_stroke_style(&JsValue::from_str("white"));
+    context.set_stroke_style(&JsValue::from_str("#FF94F1FF"));
     context.set_line_width(2.0);
 
     context.begin_path();

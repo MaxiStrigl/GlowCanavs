@@ -3,6 +3,7 @@ mod enums;
 mod helpers;
 mod stroke_rendering;
 
+use components::color_selector::ColorSelector;
 use components::bottombar::BottomBar;
 use components::canvas::Canvas;
 use components::popover::Popover;
@@ -35,7 +36,7 @@ pub fn App() -> impl IntoView {
         <main class="container">
             <Canvas/>
             <div class="ui-container" >
-                <Popover show=show_popup/>
+                <Popover show=show_popup inner_content=|| ColorSelector()/>
                 <BottomBar on_click=move |_| set_show_popup.update(|value| *value = !*value)/>
             </div>
         </main>

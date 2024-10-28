@@ -1,5 +1,8 @@
 use leptos::*;
+use wasm_bindgen::JsValue;
+use web_sys::console::log_1;
 use crate::app::components::color_display::ColorDisplay;
+
 
 #[component]
 pub fn ColorSelector() -> impl IntoView {
@@ -11,7 +14,7 @@ pub fn ColorSelector() -> impl IntoView {
                 key = |color| color.clone()
                 children = |color| {
                 view! {
-                    <ColorDisplay color=color.to_string()/>
+                    <ColorDisplay color=color.to_string() on:click=move|_| log_1(&JsValue::from_str("HI")) />
                 }
             }/>
         </div>

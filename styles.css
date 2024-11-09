@@ -75,7 +75,7 @@ main {
 .color-selector {
   display: flex;
   flex-wrap: wrap;
-  width: 14rem;
+  width: 16rem;
   justify-content: center;
   align-items: center;
   gap: 4px;
@@ -86,6 +86,7 @@ main {
 }
 
 .color-display {
+  min-width: 64px;
   display: flex;
   flex-direction: column;
   gap: 2px;

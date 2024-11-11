@@ -4,18 +4,18 @@
   "version": "0.1.0",
   "identifier": "com.glowcanvas.app",
   "build": {
-    "beforeDevCommand": "trunk serve",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "trunk build --release",
+    "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "app": {
-    "withGlobalTauri": true,
     "windows": [
       {
         "title": "glowcanvas",
         "width": 800,
         "height": 600
+        
       }
     ],
     "security": {

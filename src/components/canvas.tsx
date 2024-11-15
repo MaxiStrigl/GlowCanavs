@@ -1,7 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, MouseEvent } from "react";
+import { drawLine } from "../utils/drawing";
 
 function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  var points : [number,number][] = [];
 
 
   function scaleCanvas(canvas: HTMLCanvasElement) {
@@ -39,19 +42,40 @@ function Canvas() {
       const handleResize = () => scaleCanvas(canvas);
       window.addEventListener("resize", handleResize);
 
-      context.fillStyle = "blue";
-      context.fillRect(0, 0, 100, 100);
-
       return () => {
         window.removeEventListener("resize", handleResize);
       }
     }
   })
 
+  const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
+    const x = e.pageX;
+    const y = e.pageY;
+
+    points.push([x, y])
+  }
+
+  const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
+    const x = e.pageX;
+    const y = e.pageY;
+
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    points.push([x,y]);
+
+    drawLine(points, canvas);
+
+    points = [];
+  }
+
 
   return (
     <div>
-      <canvas ref={canvasRef} className="bg-neutral-900 h-screen w-screen" />
+      <canvas ref={canvasRef} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} className="bg-neutral-900 h-screen w-screen" />
     </div>
   )
 }

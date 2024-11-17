@@ -1,26 +1,75 @@
-import { finishStroke } from "./gateway";
+import {clearStrokes, startStroke, finishStroke } from "./gateway";
+import { Point, Stroke } from "../types";
 
-export async function drawLine(line_points: [number,number][], canvas: HTMLCanvasElement) {
-
+export async function startLine(point: Point, canvas: HTMLCanvasElement) {
   if (!canvas) {
-    return;
+    return
   }
-
-  const context = canvas.getContext('2d');
+  const context = canvas.getContext("2d");
 
   if (!context) {
     return;
   }
-  
-  const segment_points: [number,number][] = await finishStroke(line_points);
 
-  console.log(segment_points[0]);
-  console.log(segment_points[1]);
+  const stroke: Stroke = await startStroke(point);
+  console.log(stroke);
   
 
-  context.lineWidth = 4;
-  context.strokeStyle = "#FFFFFF";
-  context.moveTo(segment_points[0][0], segment_points[0][1]);
-  context.lineTo(segment_points[1][0], segment_points[1][1]);
-  context.stroke();
+  if (stroke.points.length == 1) {
+    drawPoint(stroke.points[0], canvas); 
+  }
+}
+
+export async function finishLine(point: Point, canvas: HTMLCanvasElement) {
+  if (!canvas) {
+    return;
+  }
+
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    return;
+  }
+
+  await finishStroke(point);
+}
+
+export async function clearCanvas(canvas: HTMLCanvasElement) {
+  const strokes = await clearStrokes();
+
+  rerenderCanvas(strokes, canvas);
+}
+
+function rerenderCanvas(strokes: Stroke[], canvas: HTMLCanvasElement) {
+  console.log("Clear");
+  
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    return;
+  }
+
+  ctx.reset();
+  ctx.clearRect(0, 0, 1000, 1000);
+
+  strokes.forEach((stroke) => {
+    if (stroke.points.length > 1) {
+      //TODO: Implememnt rerender lines
+    }
+    else if (stroke.points.length == 1) {
+      drawPoint(stroke.points[0], canvas);    
+    }
+  });
+}
+
+function drawPoint(point: Point, canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext("2d"); 
+  if (!ctx) {
+    return;
+  }
+
+  ctx.moveTo(point.x, point.y);
+  ctx.arc(point.x, point.y, 2.5, 0, 2 * Math.PI);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fill();
 }

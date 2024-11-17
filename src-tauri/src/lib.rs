@@ -17,7 +17,7 @@ enum Mode {
 
 #[derive(Serialize, Deserialize, Clone)]
 struct Stroke {
-    points: Vec<(f64, f64)>,
+    points: Vec<Point>,
     color: i32,
     mode: Mode,
 }
@@ -28,22 +28,35 @@ lazy_static! {
 }
 
 #[tauri::command]
-fn start_stroke(point: (f64, f64)) -> Stroke {
+fn start_stroke(point: Point) -> Stroke {
     let mut stroke = CURRENT_STROKE.lock().unwrap();
     stroke.points = vec![point];
     stroke.clone()
 }
 
 #[tauri::command]
-fn finish_stroke(points: Vec<(f64, f64)>) -> Vec<(f64, f64)> {
-    points
+fn clear_strokes() -> Vec<Stroke> {
+    let mut strokes = STROKES.lock().unwrap();
+    strokes.clear();
+    strokes.clone()
+}
+
+#[tauri::command]
+fn finish_stroke(point: Point) -> Stroke {
+    let mut stroke = CURRENT_STROKE.lock().unwrap(); 
+    let mut strokes = STROKES.lock().unwrap();
+
+    strokes.push(stroke.clone());
+    stroke.points.clear();
+
+    strokes.last().expect("No stroke in strokes").clone()
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![start_stroke, finish_stroke])
+        .invoke_handler(tauri::generate_handler![start_stroke, finish_stroke, clear_strokes])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

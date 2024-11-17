@@ -1,10 +1,12 @@
 import { useEffect, useRef, MouseEvent } from "react";
-import { drawLine } from "../utils/drawing";
+import { startLine, clearCanvas } from "../utils/drawing";
+import { Point } from "../types";
+import { finishStroke } from "../utils/gateway";
 
 function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  var points : [number,number][] = [];
+  var points: [number, number][] = [];
 
 
   function scaleCanvas(canvas: HTMLCanvasElement) {
@@ -41,23 +43,30 @@ function Canvas() {
 
       const handleResize = () => scaleCanvas(canvas);
       window.addEventListener("resize", handleResize);
+      window.addEventListener("keydown", handleKeydown)
 
       return () => {
         window.removeEventListener("resize", handleResize);
+        window.removeEventListener("keydown", handleKeydown)
       }
     }
   })
+
+  const handleKeydown = (event: KeyboardEvent) => {
+    const canvas = canvasRef.current;
+
+    if (canvas) {
+      if (event.ctrlKey && event.key == 'r') {
+        clearCanvas(canvas);
+      }
+    }
+  }
 
   const handleMouseDown = (e: MouseEvent<HTMLCanvasElement>) => {
     const x = e.pageX;
     const y = e.pageY;
 
-    points.push([x, y])
-  }
-
-  const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
-    const x = e.pageX;
-    const y = e.pageY;
+    const point: Point = { x, y };
 
     const canvas = canvasRef.current;
 
@@ -65,11 +74,22 @@ function Canvas() {
       return;
     }
 
-    points.push([x,y]);
+    startLine(point, canvas);
+  }
 
-    drawLine(points, canvas);
+  const handleMouseUp = (e: MouseEvent<HTMLCanvasElement>) => {
+    const x = e.pageX;
+    const y = e.pageY;
 
-    points = [];
+    const point: Point = { x, y };
+
+    const canvas = canvasRef.current;
+
+    if (!canvas) {
+      return;
+    }
+
+    finishStroke(point, canvas)
   }
 
 
